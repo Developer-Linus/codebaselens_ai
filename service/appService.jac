@@ -128,9 +128,13 @@ def:priv get_codebase_graph() -> dict {
 
 
 def:priv trace_paths(start: str, goal: str, max_depth: int = 6) -> dict {
+    if not start or not goal {
+        return {"start": start, "goal": goal, "start_exists": False, "goal_exists": False, "paths": []};
+    }
+
     graph = get_codebase_graph();
-    nodes = graph["nodes"];
-    edges = graph["edges"];
+    nodes = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
+    edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
 
     adj: dict = {};
     for e in edges {
