@@ -83,23 +83,29 @@ def:pub analyze_workspace(workspace_path: str, repo_url: str = "") -> dict {
         return {"ok": False, "error": "Missing workspace_path"};
     }
 
-    root = Path(workspace_path);
-    if not root.exists() {
+    root_path = Path(workspace_path);
+    if not root_path.exists() {
         return {"ok": False, "error": "Workspace not found"};
     }
 
     modules: list[dict] = [];
     module_ids: list[str] = [];
 
-    for entry in walk(str(root)) {
+    for entry in walk(str(root_path)) {
         dirpath = str(entry[0]);
         filenames = entry[2];
 
-        rel_dir = str(Path(dirpath).relative_to(root));
+        rel_dir = str(Path(dirpath).relative_to(root_path));
         if rel_dir == "." {
             rel_dir = "";
         }
         if rel_dir and _is_hidden_path(rel_dir) {
+            continue;
+        }
+
+        # Skip common non-Jac frontend/build folders inside cloned repos.
+        # This prevents the preview from attempting to compile unrelated .jac files.
+        if rel_dir.startswith("frontend") or rel_dir.startswith("src") or rel_dir.startswith("node_modules") or rel_dir.startswith("dist") or rel_dir.startswith("build") {
             continue;
         }
 
