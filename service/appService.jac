@@ -25,7 +25,14 @@ glob _codebase_manifest: dict = {};
 # }
 
 def:priv set_codebase_manifest(manifest: dict) -> dict {
-    _codebase_manifest = manifest;
+    # Merge to allow incremental updates (e.g., setting repo_url first).
+    if _codebase_manifest {
+        for k in manifest {
+            _codebase_manifest[k] = manifest[k];
+        }
+    } else {
+        _codebase_manifest = manifest;
+    }
     return {"ok": True};
 }
 

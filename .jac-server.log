@@ -36,3 +36,10 @@ components/PathTracer.cl.jac, line 21, col 20: 'continue' is only valid inside a
 ✔ Recompiled: ./components/ModuleDetails.cl.jac -> ModuleDetails.js
 ✔ Recompiled: ./components/ModuleList.cl.jac -> ModuleList.js
 ✔ Recompiled: ./components/PathTracer.cl.jac -> PathTracer.js
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+[HMR] Reloaded: ./service/appService.jac
