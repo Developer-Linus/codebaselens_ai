@@ -7,23 +7,20 @@ def:pub PathTracer(props: dict) -> JsxElement {
     has goal: str = "";
     has max_depth: str = "6";
 
-    def on_start(e: any) -> None {
-        if e and ("target" in e) and ("value" in e["target"]) {
-            start = str(e["target"]["value"]);
+    def _val(e: any) -> str {
+        if not e { return ""; }
+        if ("target" in e) and e["target"] and ("value" in e["target"]) {
+            return str(e["target"]["value"]);
         }
+        if "value" in e {
+            return str(e["value"]);
+        }
+        return "";
     }
 
-    def on_goal(e: any) -> None {
-        if e and ("target" in e) and ("value" in e["target"]) {
-            goal = str(e["target"]["value"]);
-        }
-    }
-
-    def on_depth(e: any) -> None {
-        if e and ("target" in e) and ("value" in e["target"]) {
-            max_depth = str(e["target"]["value"]);
-        }
-    }
+    def on_start(e: any) -> None { start = _val(e); }
+    def on_goal(e: any) -> None { goal = _val(e); }
+    def on_depth(e: any) -> None { max_depth = _val(e); }
 
     async def submit(e: any) -> None {
         if e and ("preventDefault" in e) {
