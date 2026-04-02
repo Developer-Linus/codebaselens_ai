@@ -39,10 +39,22 @@ def:pub useCodebase() -> dict {
         return res if res else {};
     }
 
+    async def clone_repo(repo_url: str, token: str = "") -> dict {
+        res = await safe_fetch("clone_repo_to_workspace", {"repo_url": repo_url, "token": token});
+        return res if res else {};
+    }
+
+    async def cleanup_repo(path: str) -> dict {
+        res = await safe_fetch("cleanup_repo_workspace", {"path": path});
+        return res if res else {};
+    }
+
     return {
         "get_manifest": get_manifest,
         "set_manifest": set_manifest,
         "get_graph": get_graph,
-        "trace": trace
+        "trace": trace,
+        "clone_repo": clone_repo,
+        "cleanup_repo": cleanup_repo
     };
 }

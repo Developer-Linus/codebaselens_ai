@@ -2,9 +2,11 @@ def:priv greet(name: str) -> dict {
     return {"message": "Hello, " + name + "! Your Jac backend is working."};
 }
 
-# ==== CodebaseLens: lightweight onboarding graph ====
+# === CodebaseLens: lightweight onboarding graph ===
 # The client sends a manifest describing modules and their relationships.
 # We store it in-memory for the session and compute helpful views.
+
+import from service.gitUtils { clone_github_repo, cleanup_workspace }
 
 glob _codebase_manifest: dict = {};
 
@@ -24,6 +26,7 @@ glob _codebase_manifest: dict = {};
 #   ]
 # }
 
+
 def:priv set_codebase_manifest(manifest: dict) -> dict {
     # Merge to allow incremental updates (e.g., setting repo_url first).
     if _codebase_manifest {
@@ -35,6 +38,7 @@ def:priv set_codebase_manifest(manifest: dict) -> dict {
     }
     return {"ok": True};
 }
+
 
 def:priv get_codebase_manifest() -> dict {
     if _codebase_manifest {
@@ -68,7 +72,7 @@ def:priv get_codebase_manifest() -> dict {
                 "kind": "backend",
                 "summary": "Backend functions used by the client (e.g., greet).",
                 "imports": [],
-                "exports": ["greet", "set_codebase_manifest", "get_codebase_manifest", "get_codebase_graph", "trace_paths"],
+                "exports": ["greet", "set_codebase_manifest", "get_codebase_manifest", "get_codebase_graph", "trace_paths", "clone_repo_to_workspace"],
                 "calls": [],
                 "tags": ["service"]
             },
@@ -176,4 +180,29 @@ def:priv trace_paths(start: str, goal: str, max_depth: int = 6) -> dict {
         "goal_exists": (goal in ids),
         "paths": paths
     };
+}
+
+
+# --- Git utilities exposed to the client ---
+
+def:priv clone_repo_to_workspace(repo_url: str, token: str = "") -> dict {
+    # Clones into .tmp/repos/<slug>__<uuid>/ and returns the workspace path.
+    # The caller can later cleanup via cleanup_repo_workspace.
+    res = clone_github_repo(repo_url=repo_url, token=token, depth=1);
+    if not res or not res["ok"] {
+        return res;
+    }
+
+    # Store minimal session state for later analysis steps.
+    set_codebase_manifest({
+        "repo_url": repo_url,
+        "workspace": {"path": res["path"], "workspace_id": res["workspace_id"]}
+    });
+
+    return res;
+}
+
+
+def:priv cleanup_repo_workspace(path: str) -> dict {
+    return cleanup_workspace(path);
 }
