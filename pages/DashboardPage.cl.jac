@@ -1,7 +1,5 @@
 import from "@jac/runtime" { jacLogout, useNavigate }
 
-import from "@jac/runtime" { jacLogout, useNavigate }
-
 import from ..hooks.useCodebase { useCodebase }
 import from ..components.ModuleList { ModuleList }
 import from ..components.ModuleDetails { ModuleDetails }
@@ -37,7 +35,7 @@ def:pub page() -> JsxElement {
             modules = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
             edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
             if len(modules) > 0 {
-                selected_id = modules[0]["id"] if modules[0] and ("id" in modules[0]) else "";
+                selected_id = (modules[0]["id"] if (len(modules) > 0 and modules[0] and ("id" in modules[0])) else "");
             }
         } except Exception as ex {
             error = str(ex);
@@ -99,6 +97,7 @@ def:pub page() -> JsxElement {
             modules = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
             edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
             selected_id = (modules[0]["id"] if (len(modules) > 0 and modules[0] and ("id" in modules[0])) else "");
+            if not selected_id { modules = []; edges = []; }
             trace_result = {};
             loading = False;
         }
@@ -168,7 +167,7 @@ def:pub page() -> JsxElement {
                                         placeholder="https://github.com/org/repo"
                                     />
                                     <button className="btn" type="submit" disabled={not repo_url.strip()}>
-                                        Save
+                                        Analyze
                                     </button>
                                 </form>
                                 <div className="text-xs text-muted-foreground mt-3">

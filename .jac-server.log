@@ -43,3 +43,66 @@ components/PathTracer.cl.jac, line 21, col 20: 'continue' is only valid inside a
 ✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
 ✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
 [HMR] Reloaded: ./service/appService.jac
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+  127.0.0.1:37872 - "HEAD / HTTP/1.1" 405
+
+  ⏳ Building client bundle...
+
+Error rendering base route app 'app': Vite build failed after 1.3s
+
+✗ Build failed in 322ms
+error during build:
+compiled/pages/DashboardPage.js (3:1): Identifier "jacLogout" has already been declared
+file: /root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/compiled/pages/DashboardPage.js:3:1
+
+1: /* Source: /root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/pages/DashboardPage.cl.jac */
+2: import {__jacJsx, __jacSpawn} from "@jac/runtime";
+3: import { jacLogout, useNavigate } from "@jac/runtime";
+    ^
+4: import { jacLogout, useNavigate } from "@jac/runtime";
+5: import { useCodebase } from "../hooks/useCodebase.js";
+
+    at getRollupError (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/parseAst.js:406:45)
+    at error (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/parseAst.js:402:42)
+    at addImport (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:17928:22)
+    at initialise (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:13423:28)
+    at convertNode (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16774:10)
+    at convertNodeList (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16784:38)
+    at program (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16634:21)
+    at convertNode (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16773:19)
+    at setSource (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:17753:24)
+    at async addModuleSource (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:21885:26)
+    at processTicksAndRejections (native:7:39)
+
+Command: bun x vite build --config configs/vite.config.js
+  127.0.0.1:37888 - "GET / HTTP/1.1" 503
+✔ Recompiled: ./pages/DashboardPage.cl.jac -> DashboardPage.js
+Error rendering base route app 'app': Vite build failed after 1.3s
+
+✗ Build failed in 322ms
+error during build:
+compiled/pages/DashboardPage.js (3:1): Identifier "jacLogout" has already been declared
+file: /root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/compiled/pages/DashboardPage.js:3:1
+
+1: /* Source: /root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/pages/DashboardPage.cl.jac */
+2: import {__jacJsx, __jacSpawn} from "@jac/runtime";
+3: import { jacLogout, useNavigate } from "@jac/runtime";
+    ^
+4: import { jacLogout, useNavigate } from "@jac/runtime";
+5: import { useCodebase } from "../hooks/useCodebase.js";
+
+    at getRollupError (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/parseAst.js:406:45)
+    at error (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/parseAst.js:402:42)
+    at addImport (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:17928:22)
+    at initialise (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:13423:28)
+    at convertNode (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16774:10)
+    at convertNodeList (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16784:38)
+    at program (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16634:21)
+    at convertNode (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:16773:19)
+    at setSource (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:17753:24)
+    at async addModuleSource (/root/.jac-ide/projects/9ef53ea7-12d8-41ac-a31e-ae3f37ae99e3/prj_1775138913756/.jac/client/node_modules/rollup/dist/es/shared/node-entry.js:21885:26)
+    at processTicksAndRejections (native:7:39)
+
+Command: bun x vite build --config configs/vite.config.js
+  127.0.0.1:41980 - "GET / HTTP/1.1" 503

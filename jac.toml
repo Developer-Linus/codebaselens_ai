@@ -19,7 +19,7 @@ tailwindcss = "^4.1.17"
 watchdog = ">=3.0.0"
 
 [serve]
-base_route_app = "app"
+base_route_app = ""
 
 [plugins]
 [plugins.client]
