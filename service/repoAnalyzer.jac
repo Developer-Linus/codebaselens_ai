@@ -169,11 +169,12 @@ def:pub analyze_workspace(workspace_path: str, repo_url: str = "") -> dict {
                 if mid.endswith("/" + imp) or mid.endswith(imp) {
                     hit = mid;
                     break;
+            }
             if hit {
                 norm.append(hit);
-            else {
+            } else {
                 # Keep unknowns out of the graph to avoid noisy nodes
-                pass;
+                continue;
         m["imports"] = norm;
 
     # Repo name: last path segment of URL, else workspace folder name
