@@ -21,6 +21,9 @@ def:pub useCodebase() -> dict {
 
     async def get_manifest() -> dict {
         res = await safe_fetch("get_codebase_manifest", {});
+        if res and ("manifest" in res) {
+            return res["manifest"] or {};
+        }
         return res if res else {};
     }
 
