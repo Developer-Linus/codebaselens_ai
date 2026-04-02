@@ -2,8 +2,6 @@ import from "@jac/runtime" { __doFuncFetch, jacLogout, useNavigate }
 
 # Data hook for CodebaseLens backend endpoints.
 
-import from "@jac/runtime" { jacLogout, useNavigate }
-
 def:pub useCodebase() -> dict {
     navigate = useNavigate();
 
