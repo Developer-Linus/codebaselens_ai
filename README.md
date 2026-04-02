@@ -1,73 +1,193 @@
-# Fullstack Starter
+# CodebaseLens AI (Jac Fullstack)
 
-A full-stack Jac starter template with user authentication and a working backend function demo.
+CodebaseLens AI is a Jac fullstack app for **cloning a GitHub repository**, **analyzing its Jac codebase**, and **exploring relationships** between files/modules through an interactive dashboard.
 
-## Project Structure
+It provides:
+- A secure, auth-gated UI (`/dashboard`)
+- Backend endpoints for cloning + analysis
+- A lightweight **codebase graph** (nodes + import edges)
+- A **trace** tool to find connection paths between two modules
 
-```
-jactastic/
-├── jac.toml                    # Project configuration
-├── main.jac                    # Entry point (server + client)
-├── service/
-│   └── appService.jac          # Server-side functions (add yours here)
-├── pages/
-│   ├── LoginPage.cl.jac        # Login / signup page
-│   └── DashboardPage.cl.jac    # Main dashboard (protected)
-├── components/
-│   └── GreetCard.cl.jac        # Demo component calling a backend function
-├── hooks/                      # Shared state and API logic
-├── styles/
-│   └── global.css              # CSS variables and component styles
-└── index.cl.jac                # Client router
-```
+---
 
-## Getting Started
+## Quick Start
 
+### Prerequisites
+- Jac installed (Jac CLI)
+- Git available on the server (for cloning)
+
+### Run
 ```bash
 jac start main.jac
 ```
+Open the URL printed in the terminal.
 
-Then open your browser to the URL shown in the terminal.
+### Login
+Use the app’s signup/login screen (`/login`). After authentication, you’ll be routed to `/dashboard`.
 
-## Features
+---
 
-- **User Authentication** — sign up and log in with username/password
-- **Protected Routes** — dashboard requires a valid session via `AuthGuard`
-- **Backend Function Demo** — `GreetCard` calls a `def:priv` function on the server
-- **Clean Dark Theme** — black and golden orange design ready to customise
+## How It Works
 
-## How to Extend
+### 1) Clone a repository
+From the Dashboard, provide a GitHub repo URL and run **Clone & Analyze**.
 
-### Add a server function
+The backend clones into a temporary workspace:
+- `.tmp/repos/<slug>__<uuid>/`
 
-Open `service/appService.jac` and add a new `def:priv` function:
+### 2) Analyze the workspace
+The analyzer scans the cloned workspace and builds a **manifest**:
 
-```jac
-def:priv my_function(param: str) -> dict {
-    return {"result": "Hello, " + param};
-}
+- Each entry represents a repo file (e.g., `pages/DashboardPage.cl.jac`)
+- Imports are extracted from Jac import statements:
+  - `import from ... { ... }`
+  - `sv import from ... { ... }`
+  - `cl import from ... { ... }`
+
+The backend then derives a **graph**:
+- **Nodes**: files/modules
+- **Edges**: `imports` relationships
+
+### 3) Explore relationships
+The Dashboard uses the graph to show:
+- **Imports** (outgoing edges): what a module depends on
+- **Imported by** (incoming edges): what depends on a module
+
+### 4) Trace connections
+The Trace tool finds paths from a **start** module to a **goal** module using the import graph.
+
+---
+
+## Project Structure
+
+```text
+.
+├── jac.toml
+├── main.jac
+├── index.cl.jac
+├── pages/
+│   ├── LoginPage.cl.jac
+│   └── DashboardPage.cl.jac
+├── hooks/
+│   └── useCodebase.cl.jac
+├── components/
+│   ├── ModuleList.cl.jac
+│   ├── ModuleDetails.cl.jac
+│   ├── PathTracer.cl.jac
+│   ├── ManifestEditor.cl.jac
+│   ├── OnboardingChecklist.cl.jac
+│   └── GreetCard.cl.jac
+├── service/
+│   ├── appService.jac
+│   ├── gitUtils.jac
+│   └── repoAnalyzer.jac
+└── styles/
+    └── global.css
 ```
 
-### Call it from the frontend
+---
 
-Use `sv import` in any `.cl.jac` file:
+## Key Modules
 
-```jac
-sv import from ..service.appService { my_function }
+### Entry point
+- **`main.jac`**
+  - Imports server-side functions so they are registered and callable
+  - Mounts the client app (`ClientApp` from `index.cl.jac`)
 
-result = await my_function("world");
-```
+### Client routing
+- **`index.cl.jac`**
+  - Defines routes:
+    - `/login` → Login page
+    - `/dashboard` → Dashboard (protected by `AuthGuard`)
 
-### Add a new page
+### Backend services
+- **`service/appService.jac`**
+  - In-memory session manifest storage
+  - Graph construction (nodes + edges)
+  - Trace (BFS) over the import graph
+  - Exposes clone/analyze endpoints to the client
 
-1. Create `pages/MyPage.cl.jac` with `def:pub page() -> JsxElement { ... }`
-2. Add a route in `index.cl.jac`
+- **`service/gitUtils.jac`**
+  - GitHub clone helpers
+  - Temporary workspace cleanup
 
-## Architecture
+- **`service/repoAnalyzer.jac`**
+  - Workspace scanner
+  - Import extraction + resolution to repo-relative file paths
+  - Produces a manifest suitable for graph generation
 
-- **`service/*.jac`** — server-side logic; `def:priv` functions require a valid JWT
-- **`pages/*.cl.jac`** — full-page React components, one per route
-- **`components/*.cl.jac`** — reusable UI pieces
-- **`hooks/*.cl.jac`** — shared state and API logic consumed by components
-- **`styles/global.css`** — design tokens (`--primary`, `--background`, etc.) and utility classes
-- **`main.jac`** — registers server symbols and mounts the client app
+### Client data hook
+- **`hooks/useCodebase.cl.jac`**
+  - A small client API wrapper around backend functions via `__doFuncFetch`
+  - Handles auth failures by logging out and redirecting to `/login`
+
+---
+
+## Backend API (Server Functions)
+
+These functions are imported in `main.jac` and called from the client via `__doFuncFetch`.
+
+### Manifest / Graph
+- `set_codebase_manifest(manifest: dict) -> dict`
+- `get_codebase_manifest() -> dict`
+- `get_codebase_graph() -> dict`
+
+### Trace
+- `trace_paths(start: str, goal: str, max_depth: int = 6) -> dict`
+  - Returns up to a few shortest paths (BFS)
+
+### Clone / Analyze
+- `clone_repo_to_workspace(repo_url: str, token: str = "") -> dict`
+- `analyze_repo_workspace(path: str, repo_url: str = "") -> dict`
+- `clone_and_analyze_repo(repo_url: str, token: str = "") -> dict`
+- `cleanup_repo_workspace(path: str) -> dict`
+
+---
+
+## Import Relationship Model (Cloned Repos)
+
+CodebaseLens focuses on **in-repo relationships**.
+
+### What becomes an edge
+An edge is created when an import can be resolved to a file inside the cloned workspace.
+
+Examples the analyzer resolves:
+- Relative dot imports: `.Foo`, `..components.Bar`, `...lib.utils`
+- Dotted module paths: `a.b.c` → `a/b/c`
+- Jac file variants:
+  - `X.jac`, `X.cl.jac`, `X.sv.jac`
+  - `X/__init__.jac`, `X/__init__.cl.jac`, `X/__init__.sv.jac`
+
+### What is intentionally ignored
+To keep the graph repo-focused, the analyzer ignores:
+- Runtime/npm imports (e.g., `@jac/runtime`)
+- URLs (`http://`, `https://`)
+
+---
+
+## Development Notes
+
+### Configuration
+- `jac.toml` contains project metadata, npm dependencies, and the client (Vite + Tailwind) plugin configuration.
+
+### Temporary workspaces
+- Cloned repositories are stored under `.tmp/repos/`.
+- Use the cleanup endpoint (or the Dashboard action) to remove workspaces when done.
+
+---
+
+## Troubleshooting
+
+### Dashboard is empty or stuck loading
+- Confirm you are logged in and routed to `/dashboard`.
+- Check the server log output for clone/analyze errors.
+
+### “Imported by” looks empty
+- The graph only includes **resolved in-repo imports**.
+- If a repo mostly imports runtime/npm modules, it may naturally have few in-repo edges.
+
+---
+
+## License
+
+Add your license here (e.g., MIT, Apache-2.0) depending on your distribution needs.
