@@ -45,11 +45,11 @@ def:priv set_codebase_manifest(manifest: dict) -> dict {
 
 def:priv get_codebase_manifest() -> dict {
     if _codebase_manifest {
-        return {"ok": True, "manifest": _codebase_manifest};
+        return _codebase_manifest;
     }
 
     # Built-in sample so the UI works immediately.
-    return {"ok": True, "manifest": {
+    return {
         "name": "sample-repo",
         "modules": [
             {
@@ -98,7 +98,7 @@ def:priv get_codebase_manifest() -> dict {
                 "tags": ["onboarding"]
             }
         ]
-    }};
+    };
 }
 
 
