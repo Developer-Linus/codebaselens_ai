@@ -14,9 +14,9 @@ def:pub page() -> JsxElement {
     has error: str = "";
 
     has repo_url: str = "";
-    has repo_name: str = "";
-    has modules: list = [];
-    has edges: list = [];
+    has repo_name: str = "codebase";
+    has modules: list[dict] = [];
+    has edges: list[dict] = [];
 
     has selected_id: str = "";
     has query: str = "";
@@ -26,14 +26,27 @@ def:pub page() -> JsxElement {
     async can with entry {
         try {
             manifest = await api["get_manifest"]();
-            repo_url = manifest["repo_url"] if (manifest and ("repo_url" in manifest)) else "";
+            if manifest and ("repo_url" in manifest) {
+                repo_url = str(manifest["repo_url"]);
+            }
 
             graph = await api["get_graph"]();
-            repo_name = graph["name"] if (graph and ("name" in graph)) else "codebase";
-            modules = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
-            edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
-            if len(modules) > 0 {
-                selected_id = (modules[0]["id"] if (len(modules) > 0 and modules[0] and ("id" in modules[0])) else "");
+            if graph and ("name" in graph) {
+                repo_name = str(graph["name"]);
+            }
+            if graph and ("nodes" in graph) and graph["nodes"] {
+                modules = [m for m in graph["nodes"] if m];
+            } else {
+                modules = [];
+            }
+            if graph and ("edges" in graph) and graph["edges"] {
+                edges = [e for e in graph["edges"] if e];
+            } else {
+                edges = [];
+            }
+
+            if len(modules) > 0 and modules[0] and ("id" in modules[0]) {
+                selected_id = str(modules[0]["id"]);
             }
         } except Exception as ex {
             error = str(ex);
@@ -47,25 +60,50 @@ def:pub page() -> JsxElement {
     }
 
     def on_repo_url(e: any) -> None {
-        repo_url = e.target.value;
+        if e and ("target" in e) and ("value" in e["target"]) {
+            repo_url = str(e["target"]["value"]);
+        }
     }
 
     async def save_repo(e: any) -> None {
-        e.preventDefault();
-        if not repo_url.strip() { return; }
+        if e and ("preventDefault" in e) {
+            e["preventDefault"]();
+        }
+        if not repo_url.strip() {
+            return;
+        }
 
         loading = True;
         error = "";
         try {
             res = await api["clone_and_analyze"](repo_url.strip(), "");
             if not res or ("ok" not in res) or (not res["ok"]) {
-                error = (res["error"] if (res and ("error" in res)) else "Failed to clone/analyze repo");
+                if res and ("error" in res) {
+                    error = str(res["error"]);
+                } else {
+                    error = "Failed to clone/analyze repo";
+                }
             } else {
                 graph = await api["get_graph"]();
-                repo_name = graph["name"] if (graph and ("name" in graph)) else "codebase";
-                modules = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
-                edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
-                selected_id = (modules[0]["id"] if (len(modules) > 0 and modules[0] and ("id" in modules[0])) else "");
+                if graph and ("name" in graph) {
+                    repo_name = str(graph["name"]);
+                }
+                if graph and ("nodes" in graph) and graph["nodes"] {
+                    modules = [m for m in graph["nodes"] if m];
+                } else {
+                    modules = [];
+                }
+                if graph and ("edges" in graph) and graph["edges"] {
+                    edges = [e for e in graph["edges"] if e];
+                } else {
+                    edges = [];
+                }
+
+                if len(modules) > 0 and modules[0] and ("id" in modules[0]) {
+                    selected_id = str(modules[0]["id"]);
+                } else {
+                    selected_id = "";
+                }
                 trace_result = {};
             }
         } except Exception as ex {
@@ -79,14 +117,18 @@ def:pub page() -> JsxElement {
     }
 
     def on_query(e: any) -> None {
-        query = e.target.value;
+        if e and ("target" in e) and ("value" in e["target"]) {
+            query = str(e["target"]["value"]);
+        }
     }
 
     def selected_module() -> dict {
         for m in modules {
-            if not m { continue; }
-            if ("id" in m) and (m["id"] == selected_id) {
-                return m;
+            if not m {
+                continue;
+            }
+            if ("id" in m) and (str(m["id"]) == selected_id) {
+                return m if m else {};
             }
         }
         return {};
@@ -106,15 +148,32 @@ def:pub page() -> JsxElement {
             loading = True;
             error = "";
             graph = await api["get_graph"]();
-            repo_name = graph["name"] if (graph and ("name" in graph)) else "codebase";
-            modules = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
-            edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
-            selected_id = (modules[0]["id"] if (len(modules) > 0 and modules[0] and ("id" in modules[0])) else "");
-            if not selected_id { modules = []; edges = []; }
+            if graph and ("name" in graph) {
+                repo_name = str(graph["name"]);
+            }
+            if graph and ("nodes" in graph) and graph["nodes"] {
+                modules = [m for m in graph["nodes"] if m];
+            } else {
+                modules = [];
+            }
+            if graph and ("edges" in graph) and graph["edges"] {
+                edges = [e for e in graph["edges"] if e];
+            } else {
+                edges = [];
+            }
+
+            if len(modules) > 0 and modules[0] and ("id" in modules[0]) {
+                selected_id = str(modules[0]["id"]);
+            } else {
+                selected_id = "";
+                modules = [];
+                edges = [];
+            }
+
             trace_result = {};
             loading = False;
         }
-        return ok;
+        return True if ok else False;
     }
 
     async def do_trace(start: str, goal: str, depth: int) -> None {

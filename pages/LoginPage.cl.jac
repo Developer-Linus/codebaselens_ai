@@ -10,7 +10,7 @@ def:pub page() -> JsxElement {
     navigate = useNavigate();
 
     async def handle_submit(e: any) -> None {
-        e.preventDefault();
+        if e and ("preventDefault" in e) { e["preventDefault"](); }
         loading = True;
         error = "";
         try {
@@ -41,11 +41,15 @@ def:pub page() -> JsxElement {
     }
 
     def handle_username(e: any) -> None {
-        username = e.target.value;
+        if e and ("target" in e) and ("value" in e["target"]) {
+            username = str(e["target"]["value"]);
+        }
     }
 
     def handle_password(e: any) -> None {
-        password = e.target.value;
+        if e and ("target" in e) and ("value" in e["target"]) {
+            password = str(e["target"]["value"]);
+        }
     }
 
     def toggle_mode() -> None {

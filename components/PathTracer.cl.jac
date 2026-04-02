@@ -1,30 +1,46 @@
 def:pub PathTracer(props: dict) -> JsxElement {
-    modules = props["modules"] or [];
+    modules = props["modules"] if (props and ("modules" in props) and props["modules"]) else [];
     on_trace = props["on_trace"];
-    result = props["result"];
+    result = props["result"] if (props and ("result" in props)) else None;
 
     has start: str = "";
     has goal: str = "";
     has max_depth: str = "6";
 
-    def on_start(e: any) -> None { start = e.target.value; }
-    def on_goal(e: any) -> None { goal = e.target.value; }
-    def on_depth(e: any) -> None { max_depth = e.target.value; }
+    def on_start(e: any) -> None {
+        if e and ("target" in e) and ("value" in e["target"]) {
+            start = str(e["target"]["value"]);
+        }
+    }
+
+    def on_goal(e: any) -> None {
+        if e and ("target" in e) and ("value" in e["target"]) {
+            goal = str(e["target"]["value"]);
+        }
+    }
+
+    def on_depth(e: any) -> None {
+        if e and ("target" in e) and ("value" in e["target"]) {
+            max_depth = str(e["target"]["value"]);
+        }
+    }
 
     async def submit(e: any) -> None {
-        e.preventDefault();
+        if e and ("preventDefault" in e) {
+            e["preventDefault"]();
+        }
         depth = int(max_depth) if max_depth else 6;
         await on_trace(start, goal, depth);
     }
 
-    def option(m: dict) -> JsxElement {
-        mid = str((m and ("id" in m) and m["id"]) or "");
+    def option(m: any) -> JsxElement {
+        mid = str(m["id"]) if (m and ("id" in m)) else "";
         return <option value={mid}>{mid}</option>;
     }
 
     paths = result["paths"] if (result and ("paths" in result) and result["paths"]) else [];
 
-    def path_row(p: list[str], idx: int) -> JsxElement {
+    def path_row(p: any, idx: int) -> JsxElement {
         return (
             <div key={"p" + str(idx)} className="rounded-[0.75rem] border border-border bg-surface px-3 py-2 text-sm">
                 {" → ".join([str(x) for x in p])}
@@ -65,18 +81,6 @@ def:pub PathTracer(props: dict) -> JsxElement {
                     <button className="btn btn-primary" type="submit">
                         Trace
                     </button>
-                    {result
-                    and (
-                        <div className="text-xs text-muted-foreground">
-                            {(
-                                ("Start not found" if ("start_exists" in result and (not result["start_exists"])) else "")
-                                + (
-                                    (" · " if (("start_exists" in result) and (not result["start_exists"]) and ("goal_exists" in result) and (not result["goal_exists"])) else "")
-                                )
-                                + ("Goal not found" if (("goal_exists" in result) and (not result["goal_exists"])) else "")
-                            )}
-                        </div>
-                    )}
                 </div>
             </form>
 
