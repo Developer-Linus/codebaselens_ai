@@ -1,5 +1,3 @@
-import from "@jac/runtime" { jacLogout, useNavigate }
-
 import from ..hooks.useCodebase { useCodebase }
 import from ..components.ModuleList { ModuleList }
 import from ..components.ModuleDetails { ModuleDetails }
@@ -10,7 +8,7 @@ import from ..components.OnboardingChecklist { OnboardingChecklist }
 
 def:pub page() -> JsxElement {
     api = useCodebase();
-    navigate = useNavigate();
+    navigate = api["navigate"];
 
     has loading: bool = True;
     has error: str = "";
@@ -44,7 +42,7 @@ def:pub page() -> JsxElement {
     }
 
     def handle_logout() -> None {
-        jacLogout();
+        api["logout"]();
         navigate("/login");
     }
 

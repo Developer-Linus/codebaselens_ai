@@ -3,11 +3,11 @@
 These helpers are used by backend endpoints to fetch a repo for analysis.
 """
 
-import from os { makedirs };
-import from pathlib { Path };
-import from shutil { rmtree };
-import from subprocess { run };
-import from uuid { uuid4 };
+import from os { makedirs }
+import from pathlib { Path }
+import from shutil { rmtree }
+import from subprocess { run }
+import from uuid { uuid4 }
 
 
 def:priv _safe_repo_slug(repo_url: str) -> str {

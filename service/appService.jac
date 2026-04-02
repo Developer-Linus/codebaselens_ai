@@ -7,7 +7,7 @@ def:priv greet(name: str) -> dict {
 # We store it in-memory for the session and compute helpful views.
 
 import from service.gitUtils { clone_github_repo, cleanup_workspace }
-import from service.repoAnalyzer { analyze_workspace };
+import from service.repoAnalyzer { analyze_workspace }
 
 glob _codebase_manifest: dict = {};
 

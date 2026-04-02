@@ -1,7 +1,7 @@
 """Repo analyzer: build a lightweight module/import manifest from a cloned workspace."""
 
-import from pathlib { Path };
-import from os { walk };
+import from pathlib { Path }
+import from os { walk }
 
 
 def:priv _is_hidden_path(p: str) -> bool {
