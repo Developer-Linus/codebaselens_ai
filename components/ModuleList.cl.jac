@@ -7,7 +7,7 @@ def:pub ModuleList(props: dict) -> JsxElement {
 
     q = str(query).lower();
 
-    filtered = [
+    filtered: list[dict] = [
         m for m in modules
         if m
         if (
@@ -60,7 +60,7 @@ def:pub ModuleList(props: dict) -> JsxElement {
             />
 
             <div className="flex flex-col gap-2 max-h-[22rem] overflow-auto pr-1">
-                {[row(m) for m in filtered]}
+                {[row(m) for m in filtered if m]}
 
                 {(len(filtered) == 0)
                 and (

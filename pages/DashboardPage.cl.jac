@@ -4,7 +4,7 @@ import from ..components.ModuleDetails { ModuleDetails }
 import from ..components.PathTracer { PathTracer }
 import from ..components.ManifestEditor { ManifestEditor }
 import from ..components.OnboardingChecklist { OnboardingChecklist }
-
+import from "@jac/runtime" { jacLogout, useNavigate }
 
 def:pub page() -> JsxElement {
     api = useCodebase();
@@ -247,15 +247,13 @@ def:pub page() -> JsxElement {
                                 </div>
                             </div>
 
-                            {has_repo and (
-                                <ModuleList
-                                    modules={modules}
-                                    selected_id={selected_id}
-                                    on_select={on_select}
-                                    query={query}
-                                    on_query={on_query}
-                                />
-                            )}
+                            <ModuleList
+                                modules={modules}
+                                selected_id={selected_id}
+                                on_select={on_select}
+                                query={query}
+                                on_query={on_query}
+                            />
 
                             <OnboardingChecklist repo_name={repo_name} selected_id={selected_id} />
                         </div>
@@ -272,13 +270,11 @@ def:pub page() -> JsxElement {
                                 </div>
                             )}
 
-                            {has_repo and (
-                                <>
-                                    <ModuleDetails module={sel if sel and ("id" in sel) else None} incoming={incoming} outgoing={outgoing} />
-                                    <PathTracer modules={modules} on_trace={do_trace} result={trace_result if trace_result and ("paths" in trace_result) else None} />
-                                    <ManifestEditor repo_name={repo_name} on_apply={apply_manifest} />
-                                </>
-                            )}
+                            <>
+                                <ModuleDetails module={sel if sel and ("id" in sel) else None} incoming={incoming} outgoing={outgoing} />
+                                <PathTracer modules={modules} on_trace={do_trace} result={trace_result if trace_result and ("paths" in trace_result) else None} />
+                                <ManifestEditor repo_name={repo_name} on_apply={apply_manifest} />
+                            </>
                         </div>
                     </div>
                 )}

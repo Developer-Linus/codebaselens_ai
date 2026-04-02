@@ -1,7 +1,7 @@
 def:pub PathTracer(props: dict) -> JsxElement {
-    modules = props["modules"] if (props and ("modules" in props) and props["modules"]) else [];
+    modules = props["modules"] or [];
     on_trace = props["on_trace"];
-    result = props["result"] if (props and ("result" in props)) else None;
+    result = props["result"] or {};
 
     has start: str = "";
     has goal: str = "";
@@ -34,16 +34,17 @@ def:pub PathTracer(props: dict) -> JsxElement {
     }
 
     def option(m: any) -> JsxElement {
-        mid = str(m["id"]) if (m and ("id" in m)) else "";
+        if not m { return <option value="" />; }
+        mid = str(m["id"]) if ("id" in m) else "";
         return <option value={mid}>{mid}</option>;
     }
 
-    paths = result["paths"] if (result and ("paths" in result) and result["paths"]) else [];
+    paths = result["paths"] or [];
 
     def path_row(p: any, idx: int) -> JsxElement {
         return (
             <div key={"p" + str(idx)} className="rounded-[0.75rem] border border-border bg-surface px-3 py-2 text-sm">
-                {" → ".join([str(x) for x in p])}
+                {" → ".join([str(x) for x in (p or [])])}
             </div>
         );
     }
@@ -62,14 +63,14 @@ def:pub PathTracer(props: dict) -> JsxElement {
                     <label className="label">Start</label>
                     <select className="input" value={start} onChange={on_start}>
                         <option value="">Select…</option>
-                        {[option(m) for m in modules if m]}
+                        {[option(m) for m in modules]}
                     </select>
                 </div>
                 <div>
                     <label className="label">Goal</label>
                     <select className="input" value={goal} onChange={on_goal}>
                         <option value="">Select…</option>
-                        {[option(m) for m in modules if m]}
+                        {[option(m) for m in modules]}
                     </select>
                 </div>
                 <div>
@@ -78,14 +79,12 @@ def:pub PathTracer(props: dict) -> JsxElement {
                 </div>
 
                 <div className="md:col-span-3 flex items-center justify-between gap-3 mt-1">
-                    <button className="btn btn-primary" type="submit">
-                        Trace
-                    </button>
+                    <button className="btn btn-primary" type="submit">Trace</button>
                 </div>
             </form>
 
             <div className="mt-4 flex flex-col gap-2">
-                {(result and (len(paths) == 0))
+                {(len(paths) == 0)
                 and (
                     <div className="text-sm text-muted-foreground">No paths found (try increasing max depth).</div>
                 )}
