@@ -44,6 +44,16 @@ def:pub useCodebase() -> dict {
         return res if res else {};
     }
 
+    async def analyze_workspace(path: str, repo_url: str = "") -> dict {
+        res = await safe_fetch("analyze_repo_workspace", {"path": path, "repo_url": repo_url});
+        return res if res else {};
+    }
+
+    async def clone_and_analyze(repo_url: str, token: str = "") -> dict {
+        res = await safe_fetch("clone_and_analyze_repo", {"repo_url": repo_url, "token": token});
+        return res if res else {};
+    }
+
     async def cleanup_repo(path: str) -> dict {
         res = await safe_fetch("cleanup_repo_workspace", {"path": path});
         return res if res else {};
@@ -55,6 +65,8 @@ def:pub useCodebase() -> dict {
         "get_graph": get_graph,
         "trace": trace,
         "clone_repo": clone_repo,
-        "cleanup_repo": cleanup_repo
+        "cleanup_repo": cleanup_repo,
+        "analyze_workspace": analyze_workspace,
+        "clone_and_analyze": clone_and_analyze
     };
 }

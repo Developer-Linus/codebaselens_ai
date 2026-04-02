@@ -7,6 +7,7 @@ def:priv greet(name: str) -> dict {
 # We store it in-memory for the session and compute helpful views.
 
 import from service.gitUtils { clone_github_repo, cleanup_workspace }
+import from service.repoAnalyzer { analyze_workspace };
 
 glob _codebase_manifest: dict = {};
 
@@ -205,4 +206,50 @@ def:priv clone_repo_to_workspace(repo_url: str, token: str = "") -> dict {
 
 def:priv cleanup_repo_workspace(path: str) -> dict {
     return cleanup_workspace(path);
+}
+
+
+def:priv analyze_repo_workspace(path: str, repo_url: str = "") -> dict {
+    res = analyze_workspace(workspace_path=path, repo_url=repo_url);
+    if not res or not res["ok"] {
+        return res;
+    }
+
+    manifest = res["manifest"] if ("manifest" in res) else {};
+    if not manifest {
+        return {"ok": False, "error": "Analyzer returned empty manifest"};
+    }
+
+    # Preserve any existing workspace info in the session manifest.
+    ws = _codebase_manifest["workspace"] if (_codebase_manifest and ("workspace" in _codebase_manifest)) else {};
+    if ws {
+        manifest["workspace"] = ws;
+    }
+
+    set_codebase_manifest(manifest);
+    return {"ok": True, "name": manifest["name"], "module_count": len(manifest["modules"]) if ("modules" in manifest and manifest["modules"]) else 0};
+}
+
+
+def:priv clone_and_analyze_repo(repo_url: str, token: str = "") -> dict {
+    clone_res = clone_repo_to_workspace(repo_url=repo_url, token=token);
+    if not clone_res or not clone_res["ok"] {
+        return clone_res;
+    }
+
+    path = clone_res["path"];
+    analyze_res = analyze_repo_workspace(path=path, repo_url=repo_url);
+    if not analyze_res or not analyze_res["ok"] {
+        # Cleanup on failure to avoid leaking temp dirs.
+        cleanup_repo_workspace(path);
+        return analyze_res;
+    }
+
+    return {
+        "ok": True,
+        "repo_url": repo_url,
+        "path": path,
+        "workspace_id": clone_res["workspace_id"],
+        "analysis": analyze_res
+    };
 }

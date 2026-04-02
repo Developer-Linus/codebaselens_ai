@@ -55,10 +55,25 @@ def:pub page() -> JsxElement {
     async def save_repo(e: any) -> None {
         e.preventDefault();
         if not repo_url.strip() { return; }
-        ok = await api["set_manifest"]({"repo_url": repo_url.strip()});
-        if ok {
-            error = "";
+
+        loading = True;
+        error = "";
+        try {
+            res = await api["clone_and_analyze"](repo_url.strip(), "");
+            if not res or ("ok" not in res) or (not res["ok"]) {
+                error = (res["error"] if (res and ("error" in res)) else "Failed to clone/analyze repo");
+            } else {
+                graph = await api["get_graph"]();
+                repo_name = graph["name"] if (graph and ("name" in graph)) else "codebase";
+                modules = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
+                edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
+                selected_id = (modules[0]["id"] if (len(modules) > 0 and modules[0] and ("id" in modules[0])) else "");
+                trace_result = {};
+            }
+        } except Exception as ex {
+            error = str(ex);
         }
+        loading = False;
     }
 
     def on_select(mid: str) -> None {
