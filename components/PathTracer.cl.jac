@@ -18,7 +18,7 @@ def:pub PathTracer(props: dict) -> JsxElement {
     }
 
     def option(m: dict) -> JsxElement {
-        mid = str(m["id"]);
+        mid = str((m and ("id" in m) and m["id"]) or "");
         return <option value={mid}>{mid}</option>;
     }
 

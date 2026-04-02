@@ -37,7 +37,7 @@ def:pub OnboardingChecklist(props: dict) -> JsxElement {
 
     def step_row(s: dict) -> JsxElement {
         return (
-            <div key={s["id"]} className="rounded-[0.75rem] border border-border bg-surface px-4 py-3">
+            <div key={(s and ("id" in s) and s["id"]) or "step"} className="rounded-[0.75rem] border border-border bg-surface px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
                     <div>
                         <div className="text-sm font-semibold">{s["title"]}</div>

@@ -47,7 +47,7 @@ def:pub ModuleDetails(props: dict) -> JsxElement {
         <div className="card p-6">
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                    <h2 className="text-base font-semibold truncate">{str(module["id"])}</h2>
+                    <h2 className="text-base font-semibold truncate">{str((module and ("id" in module) and module["id"]) or "")}</h2>
                     <p className="text-sm text-muted-foreground mt-1">{str(module["summary"]) if ("summary" in module and module["summary"]) else ""}</p>
                 </div>
                 <span className="text-[0.7rem] uppercase tracking-wider text-muted-foreground">

@@ -19,7 +19,7 @@ def:pub ModuleList(props: dict) -> JsxElement {
     ];
 
     def row(m: dict) -> JsxElement {
-        mid = m["id"];
+        mid = (m and ("id" in m) and m["id"]) or "";
         is_sel = (selected_id == mid);
         cls = (
             "text-left w-full rounded-[0.75rem] border px-3 py-2.5 transition-colors "

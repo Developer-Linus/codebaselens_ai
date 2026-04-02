@@ -28,3 +28,11 @@ INFO - LLM telemetry endpoints registered: /admin/llm/telemetry/{summary,traces,
    Monitoring: **/*.jac (13 files)
 
 ✔ Recompiled: ./components/OnboardingChecklist.cl.jac -> OnboardingChecklist.js
+✔ Recompiled: ./components/OnboardingChecklist.cl.jac -> OnboardingChecklist.js
+✖ Error: Compile error in ./components/ModuleList.cl.jac:
+components/ModuleList.cl.jac, line 22, col 20: 'continue' is only valid inside a loop
+✖ Error: Compile error in ./components/PathTracer.cl.jac:
+components/PathTracer.cl.jac, line 21, col 20: 'continue' is only valid inside a loop
+✔ Recompiled: ./components/ModuleDetails.cl.jac -> ModuleDetails.js
+✔ Recompiled: ./components/ModuleList.cl.jac -> ModuleList.js
+✔ Recompiled: ./components/PathTracer.cl.jac -> PathTracer.js
