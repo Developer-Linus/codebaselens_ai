@@ -29,6 +29,8 @@ glob _codebase_manifest: dict = {};
 
 
 def:priv set_codebase_manifest(manifest: dict) -> dict {
+    global _codebase_manifest;
+
     # Merge to allow incremental updates (e.g., setting repo_url first).
     if _codebase_manifest {
         for k in manifest {
