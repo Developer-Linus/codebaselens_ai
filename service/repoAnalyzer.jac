@@ -129,8 +129,9 @@ def _extract_import_targets(line: str) -> list[str] {
         return [];
     }
 
-    # Normalize dotted module path to a likely file path
-    if "." in target {
+    # Normalize dotted module path to a likely file path.
+    # Leave relative imports (starting with ".") intact so _resolve_import can handle them.
+    if "." in target and not target.startswith(".") {
         return [target.replace(".", "/")];
     }
 
@@ -205,6 +206,7 @@ def _resolve_import(current_rel: str, target: str, known: dict) -> str {
         if rest.startswith("/") {
             rest = rest[1:];
         }
+        rest = rest.replace(".", "/");
         base_dir = cur_dir;
         up = dot_count - 1;
         for _ in range(up) {
