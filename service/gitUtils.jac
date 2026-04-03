@@ -24,8 +24,8 @@ def:priv _safe_repo_slug(repo_url: str) -> str {
 
 
 def:priv _workspace_root() -> str {
-    # Keep under project-local temp so it’s easy to clean.
-    return str(Path(".tmp") / "repos");
+    # Keep clones outside the project tree so the dev server won't watch them.
+    return str(Path("/tmp/codebaselens/repos"));
 }
 
 

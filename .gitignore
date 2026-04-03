@@ -13,3 +13,4 @@ __pycache__/
 .jac-ide-bashrc
 .env
 .temp/
+.tmp/

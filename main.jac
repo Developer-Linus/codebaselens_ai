@@ -4,15 +4,12 @@ Imports server-side symbols and mounts the client app.
 """
 
 import from service.appService {
-    greet,
-    set_codebase_manifest,
-    get_codebase_manifest,
-    get_codebase_graph,
-    trace_paths,
-    clone_repo_to_workspace,
-    cleanup_repo_workspace,
-    analyze_repo_workspace,
-    clone_and_analyze_repo
+    list_projects,
+    analyze_project,
+    get_project_graph,
+    trace_project_paths,
+    set_project_manifest,
+    get_project_summary
 }
 
 cl import from .index { ClientApp }

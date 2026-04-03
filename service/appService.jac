@@ -1,202 +1,226 @@
-def:priv greet(name: str) -> dict {
-    return {"message": "Hello, " + name + "! Your Jac backend is working."};
-}
-
-# === CodebaseLens: lightweight onboarding graph ===
-# The client sends a manifest describing modules and their relationships.
-# We store it in-memory for the session and compute helpful views.
-
-import from json { dumps, loads }
-import from pathlib { Path }
+import from byllm.llm { Model }
 import from service.gitUtils { clone_github_repo, cleanup_workspace }
 import from service.repoAnalyzer { analyze_workspace }
 
-glob _codebase_manifest: dict = {};
-glob _MANIFEST_FILE: str = ".tmp/manifest.json";
+glob _llm_model: Model = Model(model_name="openai/gpt-4o-mini");
+
+"""Generate a detailed technical summary of a codebase from its modules and dependencies."""
+def:priv _generate_summary(
+    repo_name: str,
+    modules_description: str,
+    dependency_description: str
+) -> str by _llm_model(
+    reason="You are a software architect analyzing a codebase. Write a detailed technical summary covering: what the project does, its main modules and their roles, the dependency architecture, and any notable patterns. Use the repo name, module list, and dependency information provided."
+);
 
 
-def:priv _save_manifest_file(manifest: dict) -> None {
-    try {
-        p = Path(_MANIFEST_FILE);
-        p.parent.mkdir(parents=True, exist_ok=True);
-        with open(str(p), "w") as f {
-            f.write(dumps(manifest));
+glob _projects: dict = {};
+
+
+def:priv _normalize_repo_url(repo_url: str) -> str {
+    if not repo_url {
+        return "";
+    }
+    normalized: str = str(repo_url).strip();
+    if normalized.endswith("/") {
+        normalized = normalized[:len(normalized) - 1];
+    }
+    return normalized;
+}
+
+
+def:priv _derive_repo_name(repo_url: str) -> str {
+    if not repo_url {
+        return "codebase";
+    }
+    normalized = repo_url.replace(".git", "");
+    parts = normalized.split("/");
+    for i in range(len(parts) - 1, -1, -1) {
+        candidate = str(parts[i]);
+        if candidate {
+            return candidate;
         }
-    } except Exception as _e {
-        _ = str(_e);
     }
+    return "codebase";
 }
 
 
-def:priv _load_manifest_file() -> dict {
-    try {
-        p = Path(_MANIFEST_FILE);
-        if p.exists() {
-            with open(str(p), "r") as f {
-                return loads(f.read());
-            }
-        }
-    } except Exception as _e {
-        _ = str(_e);
+def:priv _ensure_project(repo_url: str) -> dict {
+    normalized = _normalize_repo_url(repo_url);
+    if not normalized {
+        return {};
     }
-    return {};
-}
-
-# manifest schema (recommended)
-# {
-#   "name": "repo-name",
-#   "modules": [
-#     {
-#       "id": "service/appService.jac",
-#       "kind": "backend|client|config|doc",
-#       "summary": "...",
-#       "imports": ["index.cl.jac"],
-#       "exports": ["greet"],
-#       "calls": ["greet"],
-#       "tags": ["auth","routing"]
-#     }
-#   ]
-# }
-
-
-def:priv set_codebase_manifest(manifest: dict) -> dict {
-    global _codebase_manifest;
-
-    # Merge to allow incremental updates (e.g., setting repo_url first).
-    if _codebase_manifest {
-        for k in manifest {
-            _codebase_manifest[k] = manifest[k];
-        }
-    } else {
-        _codebase_manifest = manifest;
+    if normalized not in _projects {
+        _projects[normalized] = {
+            "repo_url": normalized,
+            "name": _derive_repo_name(normalized),
+            "manifest": {"name": _derive_repo_name(normalized), "modules": []}
+        };
     }
-    _save_manifest_file(_codebase_manifest);
-    return {"ok": True};
+    return _projects[normalized];
 }
 
 
-def:priv get_codebase_manifest() -> dict {
-    global _codebase_manifest;
-    if _codebase_manifest {
-        return _codebase_manifest;
+def:priv _set_project_manifest(repo_url: str, manifest: dict) -> bool {
+    project = _ensure_project(repo_url);
+    if not project or not manifest {
+        return False;
     }
 
-    # Another worker may have written the manifest to disk.
-    saved = _load_manifest_file();
-    if saved {
-        _codebase_manifest = saved;
-        return _codebase_manifest;
+    name = _derive_repo_name(project["repo_url"]);
+    if manifest and ("name" in manifest) and manifest["name"] {
+        name = str(manifest["name"]);
     }
-
-    # Built-in sample so the UI works immediately.
-    return {
-        "name": "sample-repo",
-        "modules": [
-            {
-                "id": "main.jac",
-                "kind": "backend",
-                "summary": "Entry point: imports backend endpoints and mounts the client app.",
-                "imports": ["service/appService.jac", "index.cl.jac"],
-                "exports": ["app"],
-                "calls": [],
-                "tags": ["entry", "mount"]
-            },
-            {
-                "id": "index.cl.jac",
-                "kind": "client",
-                "summary": "Client router: /login and /dashboard routes.",
-                "imports": ["pages/LoginPage.cl.jac", "pages/DashboardPage.cl.jac"],
-                "exports": ["ClientApp"],
-                "calls": [],
-                "tags": ["routing"]
-            },
-            {
-                "id": "service/appService.jac",
-                "kind": "backend",
-                "summary": "Backend functions used by the client (e.g., greet).",
-                "imports": [],
-                "exports": ["greet", "set_codebase_manifest", "get_codebase_manifest", "get_codebase_graph", "trace_paths", "clone_repo_to_workspace"],
-                "calls": [],
-                "tags": ["service"]
-            },
-            {
-                "id": "pages/LoginPage.cl.jac",
-                "kind": "client",
-                "summary": "Auth page: sign in / sign up.",
-                "imports": ["@jac/runtime"],
-                "exports": ["page"],
-                "calls": ["jacLogin", "jacSignup"],
-                "tags": ["auth"]
-            },
-            {
-                "id": "pages/DashboardPage.cl.jac",
-                "kind": "client",
-                "summary": "Onboarding dashboard: explore modules and relationships.",
-                "imports": ["components/*", "hooks/*"],
-                "exports": ["page"],
-                "calls": [],
-                "tags": ["onboarding"]
-            }
-        ]
-    };
+    project["name"] = name;
+    project["manifest"] = manifest if manifest else {"name": name, "modules": []};
+    return True;
 }
 
 
-def:priv get_codebase_graph() -> dict {
-    manifest = get_codebase_manifest();
-    modules = manifest["modules"] if manifest and manifest["modules"] else [];
+def:pub list_projects() -> dict {
+    projects: list[dict] = [];
+    for repo_url in _projects {
+        entry = _projects[repo_url];
+        manifest = entry["manifest"] if entry and ("manifest" in entry) else {};
+        modules: list = manifest["modules"] if (manifest and "modules" in manifest) else [];
+        projects.append({
+            "repo_url": repo_url,
+            "name": entry["name"] if entry and ("name" in entry) else _derive_repo_name(repo_url),
+            "module_count": len(modules)
+        });
+    }
+    return {"projects": projects};
+}
+
+
+def:pub analyze_project(repo_url: str, token: str = "", force: bool = False) -> dict {
+    normalized = _normalize_repo_url(repo_url);
+    if not normalized {
+        return {"ok": False, "error": "Missing repo_url"};
+    }
+
+    entry = _projects.get(normalized);
+    if entry and entry["manifest"] and (not force) {
+        name = entry["name"] if ("name" in entry and entry["name"]) else _derive_repo_name(normalized);
+        return {"ok": True, "cached": True, "name": name};
+    }
+
+    clone_res = clone_github_repo(repo_url=normalized, token=token, depth=1);
+    if not clone_res or not clone_res["ok"] {
+        err = clone_res["error"] if (clone_res and ("error" in clone_res)) else "Clone failed";
+        return {"ok": False, "error": err};
+    }
+
+    path = clone_res["path"];
+    analyze_res = analyze_workspace(workspace_path=path, repo_url=normalized);
+    cleanup_workspace(path);
+
+    if not analyze_res or not analyze_res["ok"] {
+        err = analyze_res["error"] if (analyze_res and ("error" in analyze_res)) else "Analysis failed";
+        return {"ok": False, "error": err};
+    }
+
+    manifest = analyze_res["manifest"] if ("manifest" in analyze_res) else {};
+    if not manifest {
+        return {"ok": False, "error": "Analyzer returned empty manifest"};
+    }
+
+    project = _ensure_project(normalized);
+    if not _set_project_manifest(normalized, manifest) or not project {
+        return {"ok": False, "error": "Failed to persist manifest"};
+    }
+
+    return {"ok": True, "cached": False, "name": project["name"] if ("name" in project) else _derive_repo_name(normalized)};
+}
+
+
+def:pub get_project_graph(repo_url: str) -> dict {
+    normalized = _normalize_repo_url(repo_url);
+    if not normalized {
+        return {"name": "", "nodes": [], "edges": []};
+    }
+    project = _projects.get(normalized);
+    if not project or ("manifest" not in project) {
+        return {"name": "", "nodes": [], "edges": []};
+    }
+
+    manifest = project["manifest"];
+    modules = manifest["modules"] if (manifest and "modules" in manifest) else [];
 
     nodes: list[dict] = [];
     edges: list[dict] = [];
 
     for m in modules {
+        if not m {
+            continue;
+        }
+        mid = str(m["id"]) if ("id" in m and m["id"]) else "";
+        if not mid {
+            continue;
+        }
         nodes.append({
-            "id": m["id"],
+            "id": mid,
             "kind": m["kind"] if "kind" in m else "unknown",
             "summary": m["summary"] if "summary" in m else "",
             "tags": m["tags"] if "tags" in m else []
         });
-
-        imps = m["imports"] if "imports" in m and m["imports"] else [];
+        imps = m["imports"] if ("imports" in m and m["imports"]) else [];
         for imp in imps {
-            edges.append({"from": m["id"], "to": imp, "type": "imports"});
+            edges.append({"from": mid, "to": imp, "type": "imports"});
         }
     }
 
-    return {"name": manifest["name"] if manifest and "name" in manifest else "codebase", "nodes": nodes, "edges": edges};
+    return {
+        "name": project["name"] if ("name" in project and project["name"]) else _derive_repo_name(normalized),
+        "nodes": nodes,
+        "edges": edges
+    };
 }
 
 
-def:priv trace_paths(start: str, goal: str, max_depth: int = 6) -> dict {
-    if not start or not goal {
+def:pub trace_project_paths(repo_url: str, start: str, goal: str, max_depth: int = 6) -> dict {
+    normalized = _normalize_repo_url(repo_url);
+    if not normalized or not start or not goal {
         return {"start": start, "goal": goal, "start_exists": False, "goal_exists": False, "paths": []};
     }
 
-    graph = get_codebase_graph();
-    nodes = graph["nodes"] if (graph and ("nodes" in graph) and graph["nodes"]) else [];
-    edges = graph["edges"] if (graph and ("edges" in graph) and graph["edges"]) else [];
+    graph = get_project_graph(normalized);
+    nodes = graph["nodes"] if (graph and ("nodes" in graph)) else [];
+    edges = graph["edges"] if (graph and ("edges" in graph)) else [];
 
     adj: dict = {};
-    for e in edges {
-        if e["from"] not in adj {
-            adj[e["from"]] = [];
+    ids: list[str] = [];
+    for n in nodes {
+        if not n or ("id" not in n) {
+            continue;
         }
-        adj[e["from"]].append(e["to"]);
+        mid = str(n["id"]);
+        ids.append(mid);
     }
 
-    # BFS for a few shortest paths
+    for e in edges {
+        if not e or ("from" not in e) or ("to" not in e) {
+            continue;
+        }
+        frm = str(e["from"]);
+        to = str(e["to"]);
+        if frm not in adj {
+            adj[frm] = [];
+        }
+        adj[frm].append(to);
+    }
+
     paths: list[list[str]] = [];
     queue: list[dict] = [{"path": [start]}];
 
     while queue {
         cur = queue.pop(0);
-        path = cur["path"];
-        last = path[-1];
+        path: list = cur["path"];
+        last = path[len(path) - 1];
 
         if len(path) > max_depth {
             continue;
         }
-
         if last == goal {
             paths.append(path);
             if len(paths) >= 5 {
@@ -205,19 +229,12 @@ def:priv trace_paths(start: str, goal: str, max_depth: int = 6) -> dict {
             continue;
         }
 
-        nexts = adj[last] if last in adj else [];
+        nexts = adj[last] if (last in adj) else [];
         for n in nexts {
-            if n in path {
-                continue;
+            if n not in path {
+                queue.append({"path": path + [n]});
             }
-            queue.append({"path": path + [n]});
         }
-    }
-
-    # Ensure start/goal exist (helpful UX)
-    ids: list[str] = [];
-    for n in nodes {
-        ids.append(str(n["id"]));
     }
 
     return {
@@ -230,72 +247,85 @@ def:priv trace_paths(start: str, goal: str, max_depth: int = 6) -> dict {
 }
 
 
-# --- Git utilities exposed to the client ---
-
-def:priv clone_repo_to_workspace(repo_url: str, token: str = "") -> dict {
-    # Clones into .tmp/repos/<slug>__<uuid>/ and returns the workspace path.
-    # The caller can later cleanup via cleanup_repo_workspace.
-    res = clone_github_repo(repo_url=repo_url, token=token, depth=1);
-    if not res or not res["ok"] {
-        return res;
+def:pub get_project_summary(repo_url: str) -> dict {
+    normalized: str = _normalize_repo_url(repo_url);
+    if not normalized {
+        return {"ok": False, "error": "Missing repo_url"};
     }
 
-    # Store minimal session state for later analysis steps.
-    set_codebase_manifest({
-        "repo_url": repo_url,
-        "workspace": {"path": res["path"], "workspace_id": res["workspace_id"]}
-    });
+    proj: dict = {};
+    if normalized in _projects {
+        proj = _projects[normalized];
+    }
+    if not proj or ("manifest" not in proj) {
+        return {"ok": False, "error": "Project not found. Analyze the repo first."};
+    }
 
-    return res;
+    if "summary" in proj and proj["summary"] {
+        return {"ok": True, "summary": proj["summary"], "cached": True};
+    }
+
+    manifest = proj["manifest"] if "manifest" in proj else {};
+    modules: list = manifest["modules"] if (manifest and "modules" in manifest) else [];
+    repo_name: str = str(proj["name"]) if ("name" in proj and proj["name"]) else _derive_repo_name(normalized);
+
+    mod_lines: list[str] = [];
+    dep_lines: list[str] = [];
+
+    for m in modules {
+        if not m or ("id" not in m) {
+            continue;
+        }
+        mid: str = str(m["id"]);
+        kind: str = str(m["kind"]) if "kind" in m else "module";
+        desc: str = str(m["summary"]) if ("summary" in m and m["summary"]) else "no description";
+        tags_raw = m["tags"] if ("tags" in m and m["tags"]) else [];
+        tags: str = ", ".join([str(t) for t in tags_raw]);
+
+        line: str = f"{mid} ({kind}): {desc}";
+        if tags {
+            line = f"{line} [{tags}]";
+        }
+        mod_lines.append(line);
+
+        imps = m["imports"] if ("imports" in m and m["imports"]) else [];
+        for imp in imps {
+            dep_lines.append(f"{mid} -> {str(imp)}");
+        }
+    }
+
+    modules_desc: str = "\n".join(mod_lines) if mod_lines else "No modules found";
+    deps_desc: str = "\n".join(dep_lines) if dep_lines else "No dependencies";
+
+    try {
+        summary_text = _generate_summary(
+            repo_name=repo_name,
+            modules_description=modules_desc,
+            dependency_description=deps_desc
+        );
+    } except Exception as ex {
+        return {"ok": False, "error": f"LLM error: {str(ex)}"};
+    }
+
+    proj["summary"] = summary_text;
+    return {"ok": True, "summary": summary_text, "cached": False};
 }
 
 
-def:priv cleanup_repo_workspace(path: str) -> dict {
-    return cleanup_workspace(path);
-}
-
-
-def:priv analyze_repo_workspace(path: str, repo_url: str = "") -> dict {
-    res = analyze_workspace(workspace_path=path, repo_url=repo_url);
-    if not res or not res["ok"] {
-        return res;
+def:pub set_project_manifest(repo_url: str, manifest: dict) -> dict {
+    normalized = _normalize_repo_url(repo_url);
+    if not normalized {
+        return {"ok": False, "error": "Missing repo_url"};
     }
 
-    manifest = res["manifest"] if ("manifest" in res) else {};
     if not manifest {
-        return {"ok": False, "error": "Analyzer returned empty manifest"};
+        return {"ok": False, "error": "Missing manifest"};
     }
 
-    # Preserve any existing workspace info in the session manifest.
-    ws = _codebase_manifest["workspace"] if (_codebase_manifest and ("workspace" in _codebase_manifest)) else {};
-    if ws {
-        manifest["workspace"] = ws;
+    if not _set_project_manifest(normalized, manifest) {
+        return {"ok": False, "error": "Could not serialize manifest"};
     }
 
-    set_codebase_manifest(manifest);
-    return {"ok": True, "name": manifest["name"], "module_count": len(manifest["modules"]) if ("modules" in manifest and manifest["modules"]) else 0};
-}
-
-
-def:priv clone_and_analyze_repo(repo_url: str, token: str = "") -> dict {
-    clone_res = clone_repo_to_workspace(repo_url=repo_url, token=token);
-    if not clone_res or not clone_res["ok"] {
-        return clone_res;
-    }
-
-    path = clone_res["path"];
-    analyze_res = analyze_repo_workspace(path=path, repo_url=repo_url);
-    if not analyze_res or not analyze_res["ok"] {
-        # Cleanup on failure to avoid leaking temp dirs.
-        cleanup_repo_workspace(path);
-        return analyze_res;
-    }
-
-    return {
-        "ok": True,
-        "repo_url": repo_url,
-        "path": path,
-        "workspace_id": clone_res["workspace_id"],
-        "analysis": analyze_res
-    };
+    project = _projects.get(normalized);
+    return {"ok": True, "name": project["name"] if project and ("name" in project) else _derive_repo_name(normalized)};
 }

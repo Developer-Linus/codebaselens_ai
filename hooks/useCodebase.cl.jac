@@ -5,7 +5,7 @@ import from "@jac/runtime" { __doFuncFetch, jacLogout, useNavigate }
 def:pub useCodebase() -> dict {
     navigate = useNavigate();
 
-    async def safe_fetch(func_name: str, payload: dict) -> any {
+    async def safe_fetch(func_name: str, payload: dict) -> object {
         try {
             return await __doFuncFetch(func_name, payload);
         } except Exception as ex {
@@ -19,54 +19,48 @@ def:pub useCodebase() -> dict {
         }
     }
 
-    async def get_manifest() -> dict {
-        res = await safe_fetch("get_codebase_manifest", {});
-        return res if res else {};
+    async def list_projects() -> object {
+        res = await safe_fetch("list_projects", {});
+        return res if res else {"projects": []};
     }
 
-    async def set_manifest(manifest: dict) -> bool {
-        res = await safe_fetch("set_codebase_manifest", {"manifest": manifest});
+    async def analyze_project(repo_url: str, token: str = "", force: bool = False) -> object {
+        res = await safe_fetch("analyze_project", {"repo_url": repo_url, "token": token, "force": force});
+        return res if res else {"ok": False, "error": "No response"};
+    }
+
+    async def get_graph(repo_url: str) -> object {
+        if not repo_url {
+            return {"name": "", "nodes": [], "edges": []};
+        }
+        res = await safe_fetch("get_project_graph", {"repo_url": repo_url});
+        return res if res else {"name": "", "nodes": [], "edges": []};
+    }
+
+    async def trace(repo_url: str, start: str, goal: str, max_depth: int) -> object {
+        if not repo_url {
+            return {"start": start, "goal": goal, "start_exists": False, "goal_exists": False, "paths": []};
+        }
+        res = await safe_fetch("trace_project_paths", {"repo_url": repo_url, "start": start, "goal": goal, "max_depth": max_depth});
+        return res if res else {"start": start, "goal": goal, "start_exists": False, "goal_exists": False, "paths": []};
+    }
+
+    async def set_manifest(repo_url: str, manifest: dict) -> object {
+        res = await safe_fetch("set_project_manifest", {"repo_url": repo_url, "manifest": manifest});
         return True if res and res["ok"] else False;
     }
 
-    async def get_graph() -> dict {
-        res = await safe_fetch("get_codebase_graph", {});
-        return res if res else {};
-    }
-
-    async def trace(start: str, goal: str, max_depth: int) -> dict {
-        res = await safe_fetch("trace_paths", {"start": start, "goal": goal, "max_depth": max_depth});
-        return res if res else {};
-    }
-
-    async def clone_repo(repo_url: str, token: str = "") -> dict {
-        res = await safe_fetch("clone_repo_to_workspace", {"repo_url": repo_url, "token": token});
-        return res if res else {};
-    }
-
-    async def analyze_workspace(path: str, repo_url: str = "") -> dict {
-        res = await safe_fetch("analyze_repo_workspace", {"path": path, "repo_url": repo_url});
-        return res if res else {};
-    }
-
-    async def clone_and_analyze(repo_url: str, token: str = "") -> dict {
-        res = await safe_fetch("clone_and_analyze_repo", {"repo_url": repo_url, "token": token});
-        return res if res else {};
-    }
-
-    async def cleanup_repo(path: str) -> dict {
-        res = await safe_fetch("cleanup_repo_workspace", {"path": path});
-        return res if res else {};
+    async def get_summary(repo_url: str) -> object {
+        res = await safe_fetch("get_project_summary", {"repo_url": repo_url});
+        return res if res else {"ok": False, "error": "No response"};
     }
 
     return {
-        "get_manifest": get_manifest,
-        "set_manifest": set_manifest,
+        "list_projects": list_projects,
+        "analyze_project": analyze_project,
         "get_graph": get_graph,
         "trace": trace,
-        "clone_repo": clone_repo,
-        "cleanup_repo": cleanup_repo,
-        "analyze_workspace": analyze_workspace,
-        "clone_and_analyze": clone_and_analyze
+        "set_manifest": set_manifest,
+        "get_summary": get_summary
     };
 }

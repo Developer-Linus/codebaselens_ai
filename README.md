@@ -102,10 +102,9 @@ The Trace tool finds paths from a **start** module to a **goal** module using th
 
 ### Backend services
 - **`service/appService.jac`**
-  - In-memory session manifest storage
-  - Graph construction (nodes + edges)
-  - Trace (BFS) over the import graph
-  - Exposes clone/analyze endpoints to the client
+  - Caches each analyzed repo manifest in an in-memory map keyed by normalized GitHub URLs
+  - Builds nodes/edges for each manifest and exposes list/analyze/trace helpers
+  - Trace (BFS) over the stored import graph for whichever project the client selects
 
 - **`service/gitUtils.jac`**
   - GitHub clone helpers
@@ -127,20 +126,17 @@ The Trace tool finds paths from a **start** module to a **goal** module using th
 
 These functions are imported in `main.jac` and called from the client via `__doFuncFetch`.
 
-### Manifest / Graph
-- `set_codebase_manifest(manifest: dict) -> dict`
-- `get_codebase_manifest() -> dict`
-- `get_codebase_graph() -> dict`
-
-### Trace
-- `trace_paths(start: str, goal: str, max_depth: int = 6) -> dict`
-  - Returns up to a few shortest paths (BFS)
-
-### Clone / Analyze
-- `clone_repo_to_workspace(repo_url: str, token: str = "") -> dict`
-- `analyze_repo_workspace(path: str, repo_url: str = "") -> dict`
-- `clone_and_analyze_repo(repo_url: str, token: str = "") -> dict`
-- `cleanup_repo_workspace(path: str) -> dict`
+### Project API
+- `list_projects() -> dict`
+  - Returns every tracked GitHub repo (URL, display name, module count)
+- `analyze_project(repo_url: str, token: str = "", force: bool = False) -> dict`
+  - Clones + analyzes the repo if it is not cached (or if `force` is `True`)
+- `get_project_graph(repo_url: str) -> dict`
+  - Materializes nodes + in-repo edges from the saved manifest
+- `trace_project_paths(repo_url: str, start: str, goal: str, max_depth: int = 6) -> dict`
+  - BFS tracer that scans the selected project's graph for connection paths
+- `set_project_manifest(repo_url: str, manifest: dict) -> dict`
+  - Replace the manifest stored for a repo so the dashboard can display custom data
 
 ---
 
@@ -171,8 +167,8 @@ To keep the graph repo-focused, the analyzer ignores:
 - `jac.toml` contains project metadata, npm dependencies, and the client (Vite + Tailwind) plugin configuration.
 
 ### Temporary workspaces
-- Cloned repositories are stored under `.tmp/repos/`.
-- Use the cleanup endpoint (or the Dashboard action) to remove workspaces when done.
+- Cloned repositories are stored under `/tmp/codebaselens/repos/` so the Jac server won't pick them up for hot-reload.
+- Workspaces are automatically removed once the analysis finishes, so there is no manual cleanup step.
 
 ---
 
