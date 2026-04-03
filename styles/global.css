@@ -192,6 +192,30 @@ body {
     }
   }
 
+  /* ===== Dashboard Tabs ===== */
+  .db-tab-bar {
+    @apply flex items-end gap-0 border-b border-border;
+  }
+
+  .db-tab {
+    @apply px-5 py-2.5 text-sm text-muted-foreground bg-transparent cursor-pointer border-b-2 border-transparent;
+    font-family: inherit;
+    margin-bottom: -1px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      @apply text-foreground;
+    }
+  }
+
+  .db-tab-active {
+    @apply text-foreground font-medium border-primary;
+  }
+
+  .db-empty-icon {
+    @apply text-3xl text-primary opacity-40;
+  }
+
   /* ===== Greet Card ===== */
   .greet-card {
     @apply p-6 mb-6;
