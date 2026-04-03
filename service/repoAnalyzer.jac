@@ -72,7 +72,9 @@ def _kind_for_file(rel_path: str) -> str {
     if rel_path.endswith(".md") or rel_path.endswith(".rst") {
         return "doc";
     }
-    if rel_path.endswith(".toml") or rel_path.endswith(".yaml") or rel_path.endswith(".yml") {
+    if rel_path.endswith(".toml")
+    or rel_path.endswith(".yaml")
+    or rel_path.endswith(".yml") {
         return "config";
     }
     return "file";
@@ -86,7 +88,9 @@ def _extract_import_targets(line: str) -> list[str] {
     }
 
     # Only handle Jac import forms we care about.
-    if (not ln.startswith("import from ")) and (not ln.startswith("sv import from ")) and (not ln.startswith("cl import from ")) {
+    if (not ln.startswith("import from "))
+    and (not ln.startswith("sv import from "))
+    and (not ln.startswith("cl import from ")) {
         return [];
     }
 
@@ -109,13 +113,14 @@ def _extract_import_targets(line: str) -> list[str] {
 
     # Strip trailing "{" if split didn't separate it
     if target and target[len(target) - 1] == "{" {
-        target = target[: len(target) - 1];
+        target = target[:len(target) - 1];
     }
 
     # Remove quotes
     if len(target) >= 2 {
-        if (target[0] == '"' and target[len(target) - 1] == '"') or (target[0] == "'" and target[len(target) - 1] == "'") {
-            target = target[1 : len(target) - 1];
+        if (target[0] == '"' and target[len(target) - 1] == '"')
+        or (target[0] == "'" and target[len(target) - 1] == "'") {
+            target = target[1:len(target) - 1];
         }
     }
 
@@ -131,7 +136,13 @@ def _extract_import_targets(line: str) -> list[str] {
 
     # Normalize dotted module path to a likely file path.
     # Leave relative imports (starting with ".") intact so _resolve_import can handle them.
-    if "." in target and not target.startswith(".") {
+    has_ext = target.endswith(".jac")
+    or target.endswith(".cl.jac")
+    or target.endswith(".sv.jac");
+    if "." in target
+    and not target.startswith(".")
+    and ("/" not in target)
+    and (not has_ext) {
         return [target.replace(".", "/")];
     }
 
@@ -215,7 +226,9 @@ def _resolve_import(current_rel: str, target: str, known: dict) -> str {
                 base_dir = "";
             }
         }
-        rel_base = (base_dir + "/" + rest) if base_dir and rest else (rest if rest else base_dir);
+        rel_base = (base_dir + "/" + rest)
+            if base_dir and rest
+            else (rest if rest else base_dir);
         for cand in _candidate_paths_for_target(rel_base) {
             if cand in known {
                 return cand;
@@ -324,26 +337,34 @@ def:pub analyze_workspace(workspace_path: str, repo_url: str = "") -> dict {
             }
 
             # Include Jac sources + a few useful metadata files.
-            is_jac = rel_path.endswith(".jac") or rel_path.endswith(".cl.jac") or rel_path.endswith(".sv.jac");
-            is_meta = rel_path.endswith("jac.toml") or rel_path.endswith("README.md") or rel_path.endswith("readme.md");
+            is_jac = rel_path.endswith(".jac")
+            or rel_path.endswith(".cl.jac")
+            or rel_path.endswith(".sv.jac");
+            is_meta = rel_path.endswith("jac.toml")
+            or rel_path.endswith("README.md")
+            or rel_path.endswith("readme.md");
             if not (is_jac or is_meta) {
                 continue;
             }
 
             full_path = str(Path(dirpath) / fn_s);
-            info = _read_summary_and_imports(full_path) if is_jac else {"summary": "", "imports": []};
+            info = _read_summary_and_imports(full_path)
+                if is_jac
+                else {"summary": "", "imports": []};
 
             mid = rel_path;
             known[mid] = True;
-            modules.append({
-                "id": mid,
-                "kind": _kind_for_file(mid),
-                "summary": info["summary"],
-                "imports": info["imports"],
-                "exports": [],
-                "calls": [],
-                "tags": []
-            });
+            modules.append(
+                {
+                    "id": mid,
+                    "kind": _kind_for_file(mid),
+                    "summary": info["summary"],
+                    "imports": info["imports"],
+                    "exports": [],
+                    "calls": [],
+                    "tags": []
+                }
+            );
         }
     }
 
@@ -375,5 +396,8 @@ def:pub analyze_workspace(workspace_path: str, repo_url: str = "") -> dict {
         name = str(root_path.name);
     }
 
-    return {"ok": True, "manifest": {"name": name, "repo_url": repo_url, "modules": modules}};
+    return {
+        "ok": True,
+        "manifest": {"name": name, "repo_url": repo_url, "modules": modules}
+    };
 }

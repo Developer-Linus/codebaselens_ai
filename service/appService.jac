@@ -6,10 +6,41 @@ def:priv greet(name: str) -> dict {
 # The client sends a manifest describing modules and their relationships.
 # We store it in-memory for the session and compute helpful views.
 
+import from json { dumps, loads }
+import from pathlib { Path }
 import from service.gitUtils { clone_github_repo, cleanup_workspace }
 import from service.repoAnalyzer { analyze_workspace }
 
 glob _codebase_manifest: dict = {};
+glob _MANIFEST_FILE: str = ".tmp/manifest.json";
+
+
+def:priv _save_manifest_file(manifest: dict) -> None {
+    try {
+        p = Path(_MANIFEST_FILE);
+        p.parent.mkdir(parents=True, exist_ok=True);
+        with open(str(p), "w") as f {
+            f.write(dumps(manifest));
+        }
+    } except Exception as _e {
+        _ = str(_e);
+    }
+}
+
+
+def:priv _load_manifest_file() -> dict {
+    try {
+        p = Path(_MANIFEST_FILE);
+        if p.exists() {
+            with open(str(p), "r") as f {
+                return loads(f.read());
+            }
+        }
+    } except Exception as _e {
+        _ = str(_e);
+    }
+    return {};
+}
 
 # manifest schema (recommended)
 # {
@@ -39,12 +70,21 @@ def:priv set_codebase_manifest(manifest: dict) -> dict {
     } else {
         _codebase_manifest = manifest;
     }
+    _save_manifest_file(_codebase_manifest);
     return {"ok": True};
 }
 
 
 def:priv get_codebase_manifest() -> dict {
+    global _codebase_manifest;
     if _codebase_manifest {
+        return _codebase_manifest;
+    }
+
+    # Another worker may have written the manifest to disk.
+    saved = _load_manifest_file();
+    if saved {
+        _codebase_manifest = saved;
         return _codebase_manifest;
     }
 
@@ -177,7 +217,7 @@ def:priv trace_paths(start: str, goal: str, max_depth: int = 6) -> dict {
     # Ensure start/goal exist (helpful UX)
     ids: list[str] = [];
     for n in nodes {
-        ids.append(n["id"]);
+        ids.append(str(n["id"]));
     }
 
     return {

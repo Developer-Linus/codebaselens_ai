@@ -6,6 +6,9 @@ def:pub PathTracer(props: dict) -> JsxElement {
     has start: str = "";
     has goal: str = "";
     has max_depth: str = "6";
+    has tracing: bool = False;
+    has traced: bool = False;
+    has trace_error: str = "";
 
     def _val(e: any) -> str {
         if not e { return ""; }
@@ -26,17 +29,25 @@ def:pub PathTracer(props: dict) -> JsxElement {
         if e and ("preventDefault" in e) {
             e["preventDefault"]();
         }
+        if not start or not goal {
+            return;
+        }
         depth = int(max_depth) if max_depth else 6;
-        await on_trace(start, goal, depth);
+        tracing = True;
+        traced = False;
+        trace_error = "";
+        try {
+            await on_trace(start, goal, depth);
+        } except Exception as ex {
+            trace_error = str(ex);
+        }
+        tracing = False;
+        traced = True;
     }
 
-    def option(m: any) -> JsxElement {
-        if not m { return <option value="" />; }
-        mid = str(m["id"]) if ("id" in m) else "";
-        return <option value={mid}>{mid}</option>;
-    }
-
-    paths = result["paths"] or [];
+    paths = result["paths"] if ("paths" in result) else [];
+    start_exists = result["start_exists"] if ("start_exists" in result) else True;
+    goal_exists = result["goal_exists"] if ("goal_exists" in result) else True;
 
     def path_row(p: any, idx: int) -> JsxElement {
         return (
@@ -60,14 +71,14 @@ def:pub PathTracer(props: dict) -> JsxElement {
                     <label className="label">Start</label>
                     <select className="input" value={start} onChange={on_start}>
                         <option value="">Select…</option>
-                        {[option(m) for m in modules]}
+                        {[<option key={str(m["id"])} value={str(m["id"])}>{str(m["id"])}</option> for m in modules if m and ("id" in m)]}
                     </select>
                 </div>
                 <div>
                     <label className="label">Goal</label>
                     <select className="input" value={goal} onChange={on_goal}>
                         <option value="">Select…</option>
-                        {[option(m) for m in modules]}
+                        {[<option key={str(m["id"])} value={str(m["id"])}>{str(m["id"])}</option> for m in modules if m and ("id" in m)]}
                     </select>
                 </div>
                 <div>
@@ -76,17 +87,26 @@ def:pub PathTracer(props: dict) -> JsxElement {
                 </div>
 
                 <div className="md:col-span-3 flex items-center justify-between gap-3 mt-1">
-                    <button className="btn btn-primary" type="submit">Trace</button>
+                    <button className="btn btn-primary" type="submit" disabled={tracing or not start or not goal}>
+                        {tracing and "Tracing…" or "Trace"}
+                    </button>
                 </div>
             </form>
 
             <div className="mt-4 flex flex-col gap-2">
-                {(len(paths) == 0)
-                and (
+                {trace_error and (
+                    <div className="text-sm text-red-500">{trace_error}</div>
+                )}
+                {(not tracing) and traced and (not start_exists) and (
+                    <div className="text-sm text-muted-foreground">Start module not found in graph.</div>
+                )}
+                {(not tracing) and traced and (not goal_exists) and (
+                    <div className="text-sm text-muted-foreground">Goal module not found in graph.</div>
+                )}
+                {(not tracing) and traced and start_exists and goal_exists and (len(paths) == 0) and (
                     <div className="text-sm text-muted-foreground">No paths found (try increasing max depth).</div>
                 )}
-                {(len(paths) > 0)
-                and (
+                {(len(paths) > 0) and (
                     <div className="flex flex-col gap-2">
                         {[path_row(paths[i], i) for i in range(len(paths))]}
                     </div>
