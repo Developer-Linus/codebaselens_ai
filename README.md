@@ -15,6 +15,7 @@ It provides:
 ### Prerequisites
 - Jac installed (Jac CLI)
 - Git available on the server (for cloning)
+- A valid OpenAI API key (see Environment section)
 
 ### Run
 ```bash
@@ -26,6 +27,18 @@ Open the URL printed in the terminal.
 Use the app’s signup/login screen (`/login`). After authentication, you’ll be routed to `/dashboard`.
 
 ---
+
+## Environment
+
+CodebaseLens AI calls OpenAI through `byllm` for project summaries, so the server needs access to an OpenAI API key before startup. Create a `.env` file at the project root (and keep it out of version control) with at least the following entry:
+
+```bash
+OPENAI_API_KEY="sk-..."
+```
+
+Restart `jac start main.jac` after creating or updating the key so the process reloads it. You can also export `OPENAI_API_KEY` directly in your shell if you prefer not to rely on a `.env` file.
+
+Treat the key as sensitive—never commit it to the repo and rotate it if it may have been exposed.
 
 ## How It Works
 
